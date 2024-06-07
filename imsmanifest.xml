@@ -1,0 +1,136 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest identifier="_6GWZ3EtLIkj" version="1.0" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2" xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+  <metadata>
+    <schema>ADL SCORM</schema>
+    <schemaversion>1.2</schemaversion>
+    <lom xmlns="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd">
+      <general>
+        <title>
+          <langstring xml:lang="x-none">Escape Room</langstring>
+        </title>
+      </general>
+      <lifecycle>
+        <version>
+          <langstring xml:lang="x-none">1</langstring>
+        </version>
+        <status>
+          <source>
+            <langstring xml:lang="x-none">LOMv1.0</langstring>
+          </source>
+          <value>
+            <langstring xml:lang="x-none">Final</langstring>
+          </value>
+        </status>
+      </lifecycle>
+      <metametadata>
+        <metadatascheme>ADL SCORM 1.2</metadatascheme>
+      </metametadata>
+      <educational>
+        <typicallearningtime>
+          <datetime>PT0H0M0S</datetime>
+        </typicallearningtime>
+      </educational>
+      <rights>
+        <cost>
+          <source>
+            <langstring xml:lang="x-none">LOMv1.0</langstring>
+          </source>
+          <value>
+            <langstring xml:lang="x-none">yes</langstring>
+          </value>
+        </cost>
+        <copyrightandotherrestrictions>
+          <source>
+            <langstring xml:lang="x-none">LOMv1.0</langstring>
+          </source>
+          <value>
+            <langstring xml:lang="x-none">yes</langstring>
+          </value>
+        </copyrightandotherrestrictions>
+      </rights>
+    </lom>
+  </metadata>
+  <organizations default="Escape_Room_ORG">
+    <organization identifier="Escape_Room_ORG">
+      <title>Escape Room</title>
+      <item identifier="Escape_Room_SCO" isvisible="true" identifierref="__6GWZ3EtLIkj_RES">
+        <title>Escape Room</title>
+      </item>
+    </organization>
+  </organizations>
+  <resources>
+    <resource identifier="__6GWZ3EtLIkj_RES" type="webcontent" href="index_lms.html" adlcp:scormtype="sco">
+      <file href="story_content/thumbnail.jpg" />
+      <file href="mobile/6d6aXyclMO8.png" />
+      <file href="mobile/6bVYfrQqQX7.png" />
+      <file href="mobile/5uqb3RVbxsb.png" />
+      <file href="mobile/5ci8VINqsiH.png" />
+      <file href="mobile/5rQeYqFjg6D.png" />
+      <file href="mobile/6h2jkIdJxuT.png" />
+      <file href="mobile/6Vi49rGis48.png" />
+      <file href="mobile/6gm2NJUnpCP.png" />
+      <file href="story_content/6qoaf1aJeAM_44100_48_0.mp3" />
+      <file href="story_content/6O2srkbnMJT_captions.js" />
+      <file href="story_content/5dMgVlMEv0L_44100_48_0.mp3" />
+      <file href="story_content/6EhJ6jhmvtj_captions.js" />
+      <file href="story_content/6T7RAmX3RCG_44100_48_0.mp3" />
+      <file href="story_content/5yrDr9rkKaW_captions.js" />
+      <file href="story_content/6MmthhqzFsS_44100_48_0.mp3" />
+      <file href="story_content/69WnvBjbM9j_captions.js" />
+      <file href="mobile/6k9A6v9ss25.png" />
+      <file href="mobile/61qHyIMpWYe.png" />
+      <file href="story_content/5kmmDqOrXt4_44100_48_0.mp3" />
+      <file href="story_content/5fiPJQzpB2f_captions.js" />
+      <file href="mobile/5teI1bB72o7.jpg" />
+      <file href="story_content/6E1AUnx0gGA_44100_48_0.mp3" />
+      <file href="story_content/6TQC1nOyLD4_captions.js" />
+      <file href="mobile/6YgicmM25xI.png" />
+      <file href="mobile/6bYrABg3vNO.png" />
+      <file href="mobile/5oGWM5qxTVJ.png" />
+      <file href="mobile/6M3p9etpZ1p.png" />
+      <file href="meta.xml" />
+      <file href="story_content/triggers.js" />
+      <file href="story_content/user.js" />
+      <file href="mobile/Shape6HAN8cEoG4d.png" />
+      <file href="mobile/Shape5g8TINolqyY.png" />
+      <file href="mobile/Shape5xhZrn3Ne3J.png" />
+      <file href="mobile/Shape5pwfLwfyUBu.png" />
+      <file href="mobile/Shape5jiodQ0ljWR.png" />
+      <file href="mobile/Shape64Q6vsNLDPI.png" />
+      <file href="mobile/Shape6dgSKrgMBtY.png" />
+      <file href="mobile/Shape60i8kXsSnGw.png" />
+      <file href="mobile/Shape5sBadPFoML6.png" />
+      <file href="mobile/Shape5X4pRH9QilB.png" />
+      <file href="mobile/Shape5xydGaYN2qb.png" />
+      <file href="mobile/Shape6S7cFOTZFwa.png" />
+      <file href="html5/data/css/output.min.css" />
+      <file href="html5/data/js/5r1BAZv6dsk.js" />
+      <file href="html5/data/js/61uVLPm0OWJ.js" />
+      <file href="html5/data/js/621LG8dvqMQ.js" />
+      <file href="html5/data/js/64seHrAWgq1.js" />
+      <file href="html5/data/js/6d6IP3JzclP.js" />
+      <file href="html5/data/js/6or36GUMZ6i.js" />
+      <file href="html5/data/js/6V3xSvqz6wR.js" />
+      <file href="html5/data/js/data.js" />
+      <file href="html5/data/js/frame.js" />
+      <file href="html5/data/js/paths.js" />
+      <file href="html5/lib/scripts/bootstrapper.min.js" />
+      <file href="html5/lib/scripts/frame.desktop.min.js" />
+      <file href="html5/lib/scripts/frame.mobile.min.js" />
+      <file href="html5/lib/scripts/slides.min.js" />
+      <file href="html5/lib/stylesheets/desktop.min.css" />
+      <file href="html5/lib/stylesheets/mobile.min.css" />
+      <file href="html5/lib/stylesheets/mobile-fonts/open-sans-bold.woff" />
+      <file href="html5/lib/stylesheets/mobile-fonts/open-sans-light.woff" />
+      <file href="html5/lib/stylesheets/mobile-fonts/open-sans-regular.woff" />
+      <file href="analytics-frame.html" />
+      <file href="story.html" />
+      <file href="index_lms.html" />
+      <file href="lms/AICCComm.html" />
+      <file href="lms/blank.html" />
+      <file href="lms/browsersniff.js" />
+      <file href="lms/goodbye.html" />
+      <file href="lms/scormdriver.js" />
+    </resource>
+  </resources>
+</manifest>
