@@ -280,6 +280,25 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
   }
+
+  /* ---------- Rounds ---------- */
+  .tile.r2 { background: linear-gradient(145deg, #5b2a55, #3a1d3f); border-color: #a04a86; }
+  .tile.r3 { background: linear-gradient(145deg, #6e2233, #401523); border-color: #d0455a; }
+  .tile.locked { opacity: .35; box-shadow: none; }
+  .tile.locked .mark { position: absolute; top: 4px; right: 7px; font-size: .55em; font-family: system-ui, sans-serif; }
+  .tile.used.r2, .tile.used.r3 { background: var(--used); border-color: #362a5c; }
+  .round-tag { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .8rem; margin-right: 6px; font-weight: 700; }
+  .round-tag.r1 { background: var(--card-edge); color: var(--ink); }
+  .round-tag.r2 { background: #a04a86; color: #fff; }
+  .round-tag.r3 { background: #d0455a; color: #fff; }
+  .card-title { font-family: Georgia, serif; color: var(--gold); font-size: clamp(1.1rem, 3vh, 1.5rem); font-weight: 700; text-align: center; min-height: 1.3em; margin-top: -8px; transition: opacity .4s; }
+  .card-title.hidden-soft { opacity: 0; }
+  .adult { display: inline-block; border: 1px solid var(--p1); color: var(--p1); border-radius: 6px; padding: 1px 8px; font-size: .8rem; font-weight: 700; letter-spacing: .1em; }
+  .field select {
+    font: inherit; font-size: 1.05rem; padding: 12px 14px; border-radius: 12px;
+    border: 2px solid var(--card-edge); background: var(--bg); color: var(--ink);
+  }
+  .note { color: var(--muted); font-size: .85rem; line-height: 1.45; margin: 0; }
 </style>
 </head>
 <body>
@@ -287,10 +306,14 @@
 <!-- ============ SETUP ============ -->
 <section id="setup" class="screen center">
   <h1 class="logo">Everything<small>&amp; NOTHING</small></h1>
-  <p class="tagline">A two-player card game of little dares &amp; big moments.</p>
+  <p class="tagline">A weekend card game for two · <span class="adult">18+</span></p>
   <form class="setup" id="setupForm" autocomplete="off">
     <div class="field p1"><label for="n1">PLAYER ONE</label><input id="n1" maxlength="16" placeholder="Player 1"></div>
     <div class="field p2"><label for="n2">PLAYER TWO</label><input id="n2" maxlength="16" placeholder="Player 2"></div>
+    <div class="field"><label for="passCount">PASSES EACH</label>
+      <select id="passCount"><option value="1">1 pass</option><option value="2">2 passes</option><option value="3" selected>3 passes</option></select>
+    </div>
+    <p class="note">Before the first card: agree on your limits and a stop word. Either player can tap <b>Stop</b> at any time.</p>
     <button class="btn" type="submit">Start Game</button>
     <div class="row">
       <button class="btn ghost" type="button" data-open="rules">How to Play</button>
@@ -315,7 +338,7 @@
 <section id="end" class="screen center hidden">
   <div class="end-emoji">✨</div>
   <h2 class="end-title">Everything… and Nothing.</h2>
-  <p class="tagline" id="endText">All 30 cards have been played. No points, no winner — just the moments.</p>
+  <p class="tagline" id="endText">All cards have been played. No points, no winner — just the moments.</p>
   <div class="row">
     <button class="btn" id="againBtn">Play Again</button>
     <button class="btn ghost" id="homeBtn">Change Players</button>
@@ -325,20 +348,21 @@
 <!-- ============ CARD OVERLAY ============ -->
 <div id="overlay" class="overlay hidden">
   <div class="who" id="who"></div>
+  <div class="card-title hidden-soft" id="cardTitle"></div>
   <div class="stage">
     <div class="flipper" id="flipper">
-      <div class="face front"><div class="big" id="bigNum"></div><div class="sub">CARD</div></div>
+      <div class="face front"><div class="big" id="bigNum"></div><div class="sub" id="frontSub">CARD</div></div>
       <div class="face back">
         <div class="half a" data-i="0">
           <div class="inner">
-            <button class="side clue"><span class="tag">OPTION A</span><span class="txt"></span><span class="tap">tap to choose</span></button>
-            <div class="side act"><span class="ctitle"></span><div class="atxt"></div><span class="dir"></span></div>
+            <button class="side clue"><span class="tag">A · GENTLE</span><span class="txt"></span><span class="tap">tap to choose</span></button>
+            <div class="side act"><span class="ctitle"></span><div class="atxt"></div></div>
           </div>
         </div>
         <div class="half b" data-i="1">
           <div class="inner">
-            <button class="side clue"><span class="tag">OPTION B</span><span class="txt"></span><span class="tap">tap to choose</span></button>
-            <div class="side act"><span class="ctitle"></span><div class="atxt"></div><span class="dir"></span></div>
+            <button class="side clue"><span class="tag">B · BOLD</span><span class="txt"></span><span class="tap">tap to choose</span></button>
+            <div class="side act"><span class="ctitle"></span><div class="atxt"></div></div>
           </div>
         </div>
       </div>
@@ -352,14 +376,17 @@
   <div class="panel">
     <h2>How to Play</h2>
     <ol>
-      <li>Two players take turns tapping a numbered card (1–30). Each card can only be played once.</li>
-      <li>The card flips and splits into two halves, each with a short clue.</li>
-      <li>Choose one clue — it flips to reveal the activity.</li>
-      <li>Activities may be something <b>you</b> do, something you do <b>for or to</b> the other player, or something <b>they</b> do for you.</li>
-      <li><b>Pass</b> — each player has 3. Passing lets you pick a new card right away. Out of passes? You must do the activity.</li>
+      <li>Before the first card, agree on your limits and a stop word.</li>
+      <li>Take turns tapping a numbered card. Each card can only be played once.</li>
+      <li>The deck plays in three rounds: <b>Warm-Up</b> (1–14), <b>Heat</b> (15–23) and <b>Main Event</b> (24–30).
+        Cards are shuffled within each round, and the next round unlocks when the current one is finished.</li>
+      <li>The card flips and splits into two halves, each with a short clue. <b>A</b> is always the gentler pick, <b>B</b> the bolder one.</li>
+      <li>Choose one clue — it flips to reveal the activity. “You” means the player who picked the card.</li>
+      <li><b>Pass</b> — each player has a set number of passes (chosen at the start). Passing lets you pick a new card right away. Out of passes? You do the activity.</li>
       <li><b>Stop</b> — either player can say “stop” at any time. The activity ends and the next player takes their turn.</li>
-      <li>The game ends when all 30 cards have been played. No points, no winner — just fun.</li>
+      <li>The game ends when every card has been played. No points, no winner.</li>
     </ol>
+    <p><b>Supply list:</b> scarf or soft tie, blindfold, toy, ice, a drink, massage oil, massage candle, lube, towels, a playlist, and a mirror.</p>
     <p class="muted">Works fully offline. Your game is saved on this device automatically.</p>
     <div class="row"><button class="btn" data-close>Got it</button></div>
   </div>
@@ -381,9 +408,10 @@
 <div id="editor" class="dialog hidden">
   <div class="panel">
     <h2>Edit Cards</h2>
-    <p class="muted">One activity per line: <code>Clue | Activity</code>. Keep clues to 2–4 words.
-      Use <code>{me}</code> for the player who picked the card and <code>{you}</code> for the other player.
-      You need at least 2 lines; with fewer than 60, activities will repeat. Changes apply to the next new game.</p>
+    <p class="muted">A line starting with <code>#</code> begins a new round, e.g. <code># Round 2: Heat</code>.
+      Every other line is one card:<br><code>Card title | Clue A | Activity A | Clue B | Activity B</code><br>
+      Keep clues to 2–4 words. “You” is the player who picked the card; write <code>{you}</code> for the other player's name.
+      The board holds exactly 30 cards. Changes apply to the next new game.</p>
     <textarea id="deckText" spellcheck="false"></textarea>
     <p class="muted" id="deckCount"></p>
     <div class="row">
@@ -411,92 +439,50 @@
   "use strict";
 
   /* ---------------------------------------------------------------
-     DEFAULT ACTIVITIES
-     "Clue | Activity"  —  {me} = player who chose, {you} = other player
+     DEFAULT DECK — 30 cards in three rounds.
+     "# Round name" starts a round; each card line is:
+     Card title | Clue A | Activity A | Clue B | Activity B
+     "You" is the player who picked the card; {you} is the other player.
+     Option A is always the gentler pick.
      --------------------------------------------------------------- */
   var DEFAULT_DECK = [
-    "Serenade time | {me} sings a verse of any song to {you} — with feeling!",
-    "Duet night | {me} and {you} sing a duet of a song {you} picks.",
-    "Shoulder relief | {me} gives {you} a 1-minute shoulder rub.",
-    "Happy feet | {you} gives {me} a 2-minute foot rub.",
-    "Helping hands | {you} gives {me} a slow 1-minute hand massage.",
-    "Head in clouds | {me} gives {you} a 1-minute scalp massage.",
-    "Mirror, mirror | {me} must copy every move {you} makes for 30 seconds.",
-    "Sweet whispers | {you} whispers three compliments in {me}'s ear.",
-    "Kind words | {me} gives {you} five genuine compliments in a row.",
-    "Slow dance | {me} leads {you} in a 1-minute slow dance (humming counts as music).",
-    "Show your moves | {me} performs their best dance move for 20 seconds.",
-    "Strike a pose | {you} chooses a pose; {me} must hold it for 30 seconds.",
-    "Tickle trouble | {you} gets to tickle {me} for 10 seconds.",
-    "Staring contest | {me} and {you} have a staring contest. The loser does 5 jumping jacks.",
-    "Secret spill | {me} shares a harmless secret {you} doesn't know yet.",
-    "Ask anything | {you} asks {me} any question — {me} must answer honestly.",
-    "Copycat | {me} does their best impression of {you}.",
-    "Role reversal | {you} does their best impression of {me}.",
-    "Salon visit | {you} plays with {me}'s hair for 1 minute.",
-    "Back writing | {me} traces a word on {you}'s back with a finger. {you} guesses it.",
-    "Mystery shape | {you} draws a shape on {me}'s back. {me} has three guesses.",
-    "Bear hug | {me} gives {you} a big 20-second hug.",
-    "Hand in hand | {me} and {you} hold hands until {me}'s next turn.",
-    "Your Majesty | {you} must call {me} “Your Majesty” until the next card is played.",
-    "At your service | {me} is {you}'s butler: fetch them a drink or snack, with a bow.",
-    "Feeding time | {you} feeds {me} a bite of something tasty.",
-    "Blind taste | {me} closes their eyes; {you} gives them something to taste or smell to guess.",
-    "Accent please | {me} speaks in an accent of {you}'s choosing until the next card.",
-    "Poet laureate | {me} makes up a 4-line poem about {you} on the spot.",
-    "Spit bars | {you} raps four lines about {me}.",
-    "Memory lane | {me} shares their favorite memory with {you}.",
-    "Perfect day | {you} describes their idea of a perfect day with {me}.",
-    "Bucket list | {me} names three things on their bucket list.",
-    "Silly face | {me} makes their silliest face. {you} must not laugh for 10 seconds.",
-    "Crack a smile | {you} has 30 seconds to make {me} laugh — no tickling!",
-    "Hand kiss | {me} kisses the back of {you}'s hand like royalty.",
-    "Arm wrestle | {me} and {you} arm wrestle — best of three.",
-    "Thumb war | {me} challenges {you} to a thumb war — best of three.",
-    "Get moving | {me} does 10 squats while {you} cheers them on.",
-    "Plank time | {you} holds a plank while {me} counts slowly to 30.",
-    "Pet peeve | {me} reveals their biggest pet peeve.",
-    "First impression | {you} tells {me} their honest first impression of them.",
-    "Three words | {me} describes {you} in exactly three words.",
-    "Charades | {me} acts out a movie without talking. {you} guesses.",
-    "Hum along | {you} hums a song. {me} has three guesses to name it.",
-    "Cheesy line | {me} delivers their cheesiest pick-up line to {you}.",
-    "Special delivery | {you} writes {me} a short sweet note right now.",
-    "Say cheese | {me} and {you} take the silliest selfie possible.",
-    "Absolutely nothing | {me} does absolutely nothing for 30 seconds while {you} stares silently.",
-    "Everything, yes | {you} must say yes to {me}'s next reasonable request.",
-    "Freeze frame | {me} cannot move for 1 minute unless {you} says “unfreeze”.",
-    "Robot mode | {you} obeys {me}'s (reasonable) commands for 1 minute.",
-    "Twisted tongue | {me} says “she sells seashells by the seashore” five times fast.",
-    "Opera voice | {me} must sing everything they say until the next card.",
-    "Piggyback | {you} gives {me} a piggyback ride across the room (or tries!).",
-    "Slow motion | {me} crosses the room in dramatic slow motion.",
-    "Runway ready | {me} struts a runway walk while {you} commentates.",
-    "Mood forecast | {you} gives a TV weather report on {me}'s mood.",
-    "Two truths | {me} tells two truths and a lie. {you} guesses the lie.",
-    "Guess the object | {me} closes their eyes; {you} places an object in their hand to guess.",
-    "Royal introduction | {you} introduces {me} as if presenting them to royalty.",
-    "Infomercial | {me} sells {you} a random item in the room, infomercial style.",
-    "Chore coupon | {me} promises to do one chore of {you}'s choice this week.",
-    "Breakfast promise | {you} promises to make {me} breakfast or coffee soon.",
-    "Neck relief | {you} gives {me} a gentle 1-minute neck rub.",
-    "Palm reading | {me} reads {you}'s palm and predicts their future.",
-    "Wink wink | {me} must wink at {you} every time {you} speaks until the next card.",
-    "Quiet cuddle | {me} and {you} cuddle for one minute in total silence.",
-    "Gratitude | {you} tells {me} three things they appreciate about them.",
-    "Yoga teacher | {you} teaches {me} a yoga pose; {me} holds it for 20 seconds.",
-    "Balancing act | {me} stands on one foot for 30 seconds while {you} tries to distract them (no touching).",
-    "Air guitar | {me} performs an epic 20-second air guitar solo for {you}.",
-    "Compliment battle | {me} and {you} trade compliments — first to hesitate loses.",
-    "Nose to nose | {me} and {you} touch noses and hold it for 10 seconds without laughing.",
-    "Story time | {you} tells {me} a made-up bedtime story in 60 seconds.",
-    "Animal instinct | {me} acts like an animal {you} chooses for 20 seconds.",
-    "High five | {me} invents a secret handshake with {you} and teaches it.",
-    "Dream big | {you} shares a dream they've never told {me}."
+    "# Round 1: Warm-Up",
+    "Sweet Talk, Tight Knots | Sweet Talk | Tell {you} the three physical features of theirs you like most, and why. | Tight Knots | Tie {you}'s wrists with a scarf. You're in control for 10 minutes.",
+    "First Kiss, Last Word | First Kiss | Re-enact your first kiss as closely as you can remember it. | Last Word | Tease {you} until they ask for what they want, out loud and specifically.",
+    "Slow Dance, Fast Hands | Slow Dance | Slow dance with {you} to a song they pick. | Fast Hands | Undress {you} one item at a time. Kiss each spot you uncover.",
+    "Secrets and Surprises | Secrets | Share something about yourself {you} doesn't know yet. | Surprises | Use a toy of {you}'s choosing on them for 3 minutes.",
+    "Kneading and Needing | Kneading | Give {you} a 5-minute shoulder and neck massage. | Needing | Use only your mouth on {you} for 3 minutes, anywhere they point.",
+    "Eyes Open, Eyes Closed | Eyes Open | Hold eye contact for 60 seconds, 6 inches apart. No talking, no touching. | Eyes Closed | Get blindfolded. {you} explores you, and you guess what they're using.",
+    "Story Time, Show Time | Story Time | Tell the story of your most embarrassing romantic moment before you met. | Show Time | Pick a song and strip for {you} until it ends.",
+    "Dream Date, Dirty Details | Dream Date | Describe your perfect night together, start to finish. | Dirty Details | Show {you} exactly how you like to be touched while they watch.",
+    "Taste Test | Blind Tasting | Blindfold {you} and feed them three things. They guess each one. | Pour and Sip | Pour a drink on a spot of your choice on {you} and take it off with your mouth.",
+    "Hot and Cold | Anywhere But Lips | Kiss {you} anywhere except the lips for 2 minutes. | Ice Trail | Trace an ice cube down {you}'s body, then warm each spot with your mouth.",
+    "Whisper and Watch | Whisper | Whisper in {you}'s ear what you plan to do to them later. | Watch | Pleasure yourself for 2 minutes while {you} watches. They can't touch.",
+    "Ask Nicely | Secret Request | Write one request on a slip of paper. {you} reads it but can't respond until tonight. | House Rule | Set one rule {you} must follow for the rest of the night.",
+    "Wash, Rinse, Wake Up | Wash, Rinse | Take a shower together. Wash {you} head to toe. | Wake Up | Plan tomorrow morning's wake-up. {you} gets no details.",
+    "Dare You | Double Dare | Invent a dare for {you}. They do it or take a double dare next round. | Something New | Pick a position you've never tried together. Tonight, you try it.",
+    "# Round 2: Heat",
+    "Oil Change | Warm Oil | Give {you} a full back massage with warm oil. | Nothing Off Limits | Massage {you} with oil, front and back. Nothing is off limits.",
+    "Body Heat | Skin to Skin | Lie skin to skin with {you} for 5 minutes. No kissing. | Slow Grind | Straddle {you} and grind slowly for 2 minutes. Clothes stay on until the timer ends.",
+    "Up Against It | Wall Kiss | Back {you} against a wall and kiss them for 60 seconds. | Pinned Hands | Pin {you}'s hands to the wall and use your mouth on their neck and chest for 2 minutes.",
+    "Grip and Tug | Belt Tug | Pull {you} close by their belt or waistband and kiss them. | Hair Grip | Take a handful of {you}'s hair and guide where their mouth goes for 2 minutes.",
+    "Bath Time | Soak Together | Run a bath and soak together. | Hands in Water | Run a bath. {you} stays in the water while you use your hands on them.",
+    "Candle Light | Candlelit Undressing | Undress each other by candlelight, taking turns one item at a time. | Warm Wax | Drip massage-candle wax on {you}'s back and rub it in. Test the heat on your wrist first.",
+    "Lip Service | Down the Spine | Kiss your way down {you}'s spine, slowly. | Down the Front | Kiss your way down the front of {you}'s body. Stop only when they tell you to.",
+    "Rough Draft | Name It | Tell {you} how rough or gentle you want it tonight, on a scale of 1 to 10. | Show It | Show them. Take the lead and go at the level you named.",
+    "Take a Seat | Lap Kiss | Sit on {you}'s lap facing them and kiss for 2 minutes. | Edge of the Bed | Have {you} sit on the edge of the bed. Kneel in front of them. Take it from there.",
+    "# Round 3: Main Event",
+    "Slow Motion | Slowest Pace | Have sex at the slowest pace you can manage for 5 minutes. | Speed Up | Start slow. {you} calls out when to speed up, and you follow.",
+    "Face to Face | Eye Contact | Have sex face to face, keeping eye contact the whole time. | Hands on Hips | {you} on top, you keep your hands on their hips and set the rhythm.",
+    "From Behind | Spoon Close | Spoon position, slow and close, for 5 minutes. | Neck Kisses | Take {you} from behind. Kiss their neck and shoulders the whole time.",
+    "Change of Scenery | Off the Bed | Have sex somewhere other than the bed: couch, chair, or floor. | Three Stops | Pick three places in the room. Move to a new one every 3 minutes.",
+    "Stop and Start | Pause and Kiss | Have sex for 2 minutes, stop for 1 minute of kissing, repeat three times. | Almost There | Bring {you} close to finishing three times before you let them.",
+    "In the Mirror | Glance Over | Have sex in view of a mirror. Look whenever you want. | Eyes on Reflection | Have sex facing the mirror. You both keep your eyes on the reflection.",
+    "Grand Finale | Their Choice | {you} picks the position. You finish together, or close to it. | Your Call | You pick the position, the pace, and how it ends. No vetoes."
   ];
 
-  var TOTAL = 30, PASSES = 3;
-  var LS_STATE = "ean.state.v1", LS_DECK = "ean.deck.v1";
+  var TOTAL = 30;
+  var LS_STATE = "ean.state.v2", LS_DECK = "ean.deck.v2", LS_NAMES = "ean.names", LS_PASSES = "ean.passes";
 
   /* ---------- storage (safe) ---------- */
   function load(key) { try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
@@ -509,48 +495,63 @@
     for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
     return a;
   }
+
+  // -> { rounds: [name], cards: [{ round, title, options:[{clue,text},{clue,text}] }], errors: [lineNo] }
   function parseDeck(lines) {
-    var out = [];
-    lines.forEach(function (line) {
-      var i = line.indexOf("|");
-      if (i < 0) return;
-      var clue = line.slice(0, i).trim(), text = line.slice(i + 1).trim();
-      if (clue && text) out.push({ clue: clue, text: text });
+    var rounds = [], cards = [], errors = [];
+    lines.forEach(function (raw, n) {
+      var line = raw.trim();
+      if (!line) return;
+      if (line.charAt(0) === "#") { rounds.push(line.replace(/^#+/, "").trim() || "Round " + (rounds.length + 1)); return; }
+      var f = line.split("|").map(function (s) { return s.trim(); });
+      if (f.length !== 5 || f.some(function (s) { return !s; })) { errors.push(n + 1); return; }
+      if (!rounds.length) rounds.push("Round 1");
+      cards.push({ round: rounds.length - 1, title: f[0], options: [{ clue: f[1], text: f[2] }, { clue: f[3], text: f[4] }] });
     });
-    return out;
+    // drop rounds with no cards so numbering stays tidy
+    var usedRounds = [], map = {};
+    cards.forEach(function (c) { if (!(c.round in map)) { map[c.round] = usedRounds.length; usedRounds.push(rounds[c.round]); } c.round = map[c.round]; });
+    return { rounds: usedRounds, cards: cards, errors: errors };
   }
   function currentDeckLines() { return load(LS_DECK) || DEFAULT_DECK; }
 
   function dealCards() {
-    var pool = parseDeck(currentDeckLines());
-    if (pool.length < 2) pool = parseDeck(DEFAULT_DECK);
-    var need = TOTAL * 2, picked = [];
-    while (picked.length < need) picked = picked.concat(shuffle(pool.slice()));
-    picked = picked.slice(0, need);
-    var cards = [];
-    for (var i = 0; i < TOTAL; i++) {
-      var a = picked[i * 2], b = picked[i * 2 + 1];
-      // avoid identical halves when the custom deck is tiny
-      if (a.text === b.text) { for (var k = 0; k < pool.length; k++) if (pool[k].text !== a.text) { b = pool[k]; break; } }
-      cards.push({ options: [a, b], used: false });
-    }
-    return cards;
+    var deck = parseDeck(currentDeckLines());
+    if (deck.cards.length !== TOTAL || deck.errors.length) deck = parseDeck(DEFAULT_DECK);
+    var dealt = [];
+    // shuffle each round separately, keep rounds in order
+    deck.rounds.forEach(function (_, r) {
+      var inRound = deck.cards.filter(function (c) { return c.round === r; });
+      shuffle(inRound).forEach(function (c) {
+        dealt.push({ round: r, title: c.title, options: c.options, used: false });
+      });
+    });
+    return { rounds: deck.rounds, cards: dealt };
   }
 
   /* ---------- state ---------- */
-  var S = null;           // { players:[{name,passes}], turn, cards, active:{card,choice}|null }
+  var S = null;   // { players:[{name,passes}], maxPasses, turn, rounds, cards, active:{card,choice}|null }
 
-  function newGame(names, first) {
+  function newGame(names, first, passes) {
+    var d = dealCards();
     S = {
-      players: [{ name: names[0], passes: PASSES }, { name: names[1], passes: PASSES }],
+      players: [{ name: names[0], passes: passes }, { name: names[1], passes: passes }],
+      maxPasses: passes,
       turn: first,
-      cards: dealCards(),
+      rounds: d.rounds,
+      cards: d.cards,
       active: null
     };
     persist();
   }
   function persist() { if (S) save(LS_STATE, S); }
   function remaining() { return S.cards.filter(function (c) { return !c.used; }).length; }
+  // the lowest round that still has unplayed cards
+  function openRound() {
+    for (var i = 0; i < S.cards.length; i++) if (!S.cards[i].used) return S.cards[i].round;
+    return -1;
+  }
+  function roundLeft(r) { return S.cards.filter(function (c) { return c.round === r && !c.used; }).length; }
 
   /* ---------- screens ---------- */
   function show(id) {
@@ -565,7 +566,7 @@
   var toastTimer;
   function toast(msg) {
     var t = $("toast"); t.textContent = msg; t.classList.add("show");
-    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2200);
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove("show"); }, 2600);
   }
 
   /* ---------- render board ---------- */
@@ -574,29 +575,34 @@
       var chip = $("chip" + p), pl = S.players[p];
       chip.querySelector(".name").textContent = pl.name;
       var dots = "";
-      for (var i = 0; i < PASSES; i++) dots += '<span class="dot' + (i < pl.passes ? "" : " spent") + '"></span>';
+      for (var i = 0; i < S.maxPasses; i++) dots += '<span class="dot' + (i < pl.passes ? "" : " spent") + '"></span>';
       chip.querySelector(".passes").innerHTML = dots;
       chip.querySelector(".passes").title = pl.passes + " passes left";
       chip.classList.toggle("active", S.turn === p);
     }
-    var line = $("turnLine");
+    var line = $("turnLine"), r = openRound();
     line.textContent = "";
+    if (r >= 0) {
+      var tag = document.createElement("span"); tag.className = "round-tag r" + (r + 1); tag.textContent = S.rounds[r];
+      line.appendChild(tag);
+    }
     var b = document.createElement("b"); b.textContent = S.players[S.turn].name;
     line.appendChild(b);
-    line.appendChild(document.createTextNode(", pick a card · " + remaining() + " left"));
+    line.appendChild(document.createTextNode(", pick a card · " + (r >= 0 ? roundLeft(r) : 0) + " left this round"));
   }
 
   function renderBoard() {
-    var board = $("board");
+    var board = $("board"), open = openRound();
     board.innerHTML = "";
     S.cards.forEach(function (c, i) {
       var t = document.createElement("button");
-      t.className = "tile" + (c.used ? " used" : "");
+      var locked = !c.used && c.round !== open;
+      t.className = "tile r" + (c.round + 1) + (c.used ? " used" : "") + (locked ? " locked" : "");
       t.textContent = i + 1;
-      t.setAttribute("aria-label", "Card " + (i + 1) + (c.used ? " (played)" : ""));
-      if (c.used) {
+      t.setAttribute("aria-label", "Card " + (i + 1) + (c.used ? " (played)" : locked ? " (locked)" : ""));
+      if (c.used || locked) {
         t.disabled = true;
-        var m = document.createElement("span"); m.className = "mark"; m.textContent = "✓"; t.appendChild(m);
+        var m = document.createElement("span"); m.className = "mark"; m.textContent = c.used ? "✓" : "🔒"; t.appendChild(m);
       } else {
         t.addEventListener("click", function () { openCard(i); });
       }
@@ -630,15 +636,6 @@
     });
   }
 
-  function direction(text) {
-    var me = text.indexOf("{me}"), you = text.indexOf("{you}");
-    var P = S.players, m = P[S.turn].name, y = P[1 - S.turn].name;
-    if (me < 0 && you < 0) return "";
-    if (you < 0) return m + " → " + m;
-    if (me < 0) return y + " → " + m;
-    return me < you ? m + " → " + y : y + " → " + m;
-  }
-
   function openCard(i) {
     if (busy) return;
     busy = true;
@@ -650,10 +647,14 @@
   function buildOverlay(resume) {
     var a = S.active, card = S.cards[a.card], me = S.turn;
     $("bigNum").textContent = a.card + 1;
+    $("frontSub").textContent = (S.rounds[card.round] || "").toUpperCase();
     var who = $("who"); who.textContent = "";
     var b = document.createElement("b"); b.textContent = S.players[me].name;
     b.style.color = me === 0 ? "var(--p1)" : "var(--p2)";
     who.appendChild(b); who.appendChild(document.createTextNode("'s card"));
+    var title = $("cardTitle");
+    title.textContent = "“" + card.title + "”";
+    title.classList.add("hidden-soft");
 
     var flipper = $("flipper");
     flipper.classList.remove("flipped");
@@ -662,10 +663,8 @@
       var opt = card.options[k];
       h.classList.remove("open", "gone");
       h.querySelector(".clue .txt").textContent = opt.clue;
-      h.querySelector(".act .ctitle").textContent = opt.clue;
+      h.querySelector(".act .ctitle").textContent = (k === 0 ? "A · " : "B · ") + opt.clue;
       fillText(h.querySelector(".act .atxt"), opt.text, me);
-      h.querySelector(".act .dir").textContent = direction(opt.text);
-      h.querySelector(".act .dir").classList.toggle("hidden", !direction(opt.text));
     });
     $("actions").innerHTML = "";
     $("overlay").classList.remove("hidden");
@@ -675,11 +674,13 @@
 
     if (resume && a.choice !== null) {
       flipper.classList.add("flipped");
+      title.classList.remove("hidden-soft");
       revealChoice(a.choice, true);
       return;
     }
     setTimeout(function () {
       flipper.classList.add("flipped");
+      title.classList.remove("hidden-soft");
       setTimeout(function () {
         setActions([{ hint: "Choose one clue to reveal the activity" }]);
         busy = false;
@@ -733,30 +734,38 @@
     S.active = null;
   }
 
+  // returns a "Round X unlocked" message if the last card of a round was just played
+  function roundNews(before) {
+    var after = openRound();
+    return after !== before && after >= 0 ? S.rounds[after] + " unlocked! " : "";
+  }
+
   function endTurn(kind) {
     if (busy) return;
+    var before = S.cards[S.active.card].round;
     closeOverlay();
     S.turn = 1 - S.turn;
     persist();
     goBoard();
-    if (remaining() > 0) toast((kind === "stop" ? "Stopped! " : "") + S.players[S.turn].name + "'s turn");
+    if (remaining() > 0) toast(roundNews(before) + (kind === "stop" ? "Stopped. " : "") + S.players[S.turn].name + "'s turn");
   }
 
   function usePass() {
     if (busy) return;
     var p = S.players[S.turn];
     if (p.passes <= 0) return;
+    var before = S.cards[S.active.card].round;
     p.passes--;
     closeOverlay();
     persist();
     goBoard();
-    if (remaining() > 0) toast(p.name + " passed — pick another card (" + p.passes + " pass" + (p.passes === 1 ? "" : "es") + " left)");
+    if (remaining() > 0) toast(roundNews(before) + p.name + " passed — pick another card (" + p.passes + " pass" + (p.passes === 1 ? "" : "es") + " left)");
   }
 
   function finish() {
     drop(LS_STATE);
     show("end");
-    $("endText").textContent = "All " + TOTAL + " cards have been played by " + S.players[0].name + " & " + S.players[1].name +
+    $("endText").textContent = "All " + S.cards.length + " cards have been played by " + S.players[0].name + " & " + S.players[1].name +
       ". No points, no winner — just the moments.";
   }
 
@@ -765,15 +774,19 @@
     $("deckText").value = currentDeckLines().join("\n");
     updateCount();
   }
-  function updateCount() {
-    var n = parseDeck($("deckText").value.split("\n")).length;
-    $("deckCount").textContent = n + " valid activit" + (n === 1 ? "y" : "ies") + (n < 60 ? " — some will repeat in a game." : ".");
+  function checkDeck() {
+    var d = parseDeck($("deckText").value.split("\n"));
+    var msg = d.cards.length + " card" + (d.cards.length === 1 ? "" : "s") + " in " + d.rounds.length + " round" + (d.rounds.length === 1 ? "" : "s") + ".";
+    if (d.errors.length) msg += " Lines that need 5 parts separated by |: " + d.errors.join(", ") + ".";
+    else if (d.cards.length !== TOTAL) msg += " You need exactly " + TOTAL + ".";
+    return { ok: !d.errors.length && d.cards.length === TOTAL, msg: msg };
   }
+  function updateCount() { $("deckCount").textContent = checkDeck().msg; }
   $("deckText").addEventListener("input", updateCount);
   $("saveDeck").addEventListener("click", function () {
-    var lines = $("deckText").value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
-    if (parseDeck(lines).length < 2) { toast("Add at least 2 lines like: Clue | Activity"); return; }
-    save(LS_DECK, lines);
+    var c = checkDeck();
+    if (!c.ok) { toast(c.msg); return; }
+    save(LS_DECK, $("deckText").value.split("\n").map(function (l) { return l.trim(); }).filter(Boolean));
     closeDialog($("editor"));
     toast("Cards saved — used in your next new game");
   });
@@ -807,9 +820,9 @@
 
   $("setupForm").addEventListener("submit", function (e) {
     e.preventDefault();
-    var names = namesFromForm();
-    save("ean.names", names);
-    newGame(names, 0);
+    var names = namesFromForm(), passes = +$("passCount").value || 3;
+    save(LS_NAMES, names); save(LS_PASSES, passes);
+    newGame(names, 0, passes);
     goBoard();
     toast(names[0] + " goes first!");
   });
@@ -818,7 +831,7 @@
   $("restartBtn").addEventListener("click", function () {
     closeDialog($("menu"));
     ask("Restart with a freshly shuffled deck?", function () {
-      newGame([S.players[0].name, S.players[1].name], 0); goBoard(); toast("New deck shuffled!");
+      newGame([S.players[0].name, S.players[1].name], 0, S.maxPasses); goBoard(); toast("New deck shuffled!");
     });
   });
   $("newPlayersBtn").addEventListener("click", function () {
@@ -826,30 +839,24 @@
     ask("End this game and change players?", function () { drop(LS_STATE); S = null; toSetup(); });
   });
   $("againBtn").addEventListener("click", function () {
-    newGame([S.players[0].name, S.players[1].name], Math.random() < .5 ? 0 : 1);
+    newGame([S.players[0].name, S.players[1].name], Math.random() < .5 ? 0 : 1, S.maxPasses);
     goBoard(); toast(S.players[S.turn].name + " goes first!");
   });
   $("homeBtn").addEventListener("click", function () { S = null; toSetup(); });
 
   function toSetup() {
-    var n = load("ean.names");
+    var n = load(LS_NAMES), p = load(LS_PASSES);
     if (n) { $("n1").value = n[0]; $("n2").value = n[1]; }
+    if (p) $("passCount").value = String(p);
     $("resumeBtn").classList.toggle("hidden", !load(LS_STATE));
     show("setup");
   }
 
   function resume() {
     S = load(LS_STATE);
-    if (!S || !S.cards || S.cards.length !== TOTAL) { S = null; toSetup(); return; }
+    if (!S || !S.cards || !S.rounds) { S = null; toSetup(); return; }
     goBoard();
-    if (S.active) {
-      if (S.active.choice === null) {
-        // card was flipped but no choice made — let them keep choosing on it
-        busy = true; buildOverlay(true);
-      } else {
-        buildOverlay(true);
-      }
-    }
+    if (S.active) { busy = true; buildOverlay(true); }
   }
 
   // keyboard: Esc closes dialogs
@@ -858,6 +865,7 @@
   });
 
   // boot: resume an in-progress game automatically
+  drop("ean.state.v1");
   if (load(LS_STATE)) resume(); else toSetup();
 
   // offline install support (only works when served over http/https)
