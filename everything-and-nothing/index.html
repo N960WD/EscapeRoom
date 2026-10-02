@@ -95,8 +95,11 @@
     padding: 8px 12px; border-radius: 14px; border: 2px solid transparent;
     background: rgba(255,255,255,.05); transition: all .3s;
   }
+  .player-chip { cursor: pointer; }
   .player-chip .name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .player-chip .passes { display: flex; gap: 4px; flex: 0 0 auto; align-items: center; font-size: .75rem; color: var(--muted); }
+  .player-chip .plabel { font-size: .65rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-right: 2px; }
+  @media (max-width: 480px) { .player-chip .plabel { display: none; } }
   .dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; opacity: .9; }
   .dot.spent { opacity: .15; }
   .player-chip.p1 { color: var(--p1); }
@@ -152,17 +155,23 @@
     position: fixed; inset: 0; z-index: 10;
     background: rgba(10, 6, 24, .82);
     backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
-    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 12px;
+    padding: max(12px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom));
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
     animation: fade .25s ease;
   }
+  /* centre vertically, but never push the buttons off-screen */
+  .overlay > :first-child { margin-top: auto; }
+  .overlay > :last-child { margin-bottom: auto; }
   @keyframes fade { from { opacity: 0; } }
   .overlay .who { font-size: 1rem; color: var(--muted); text-align: center; min-height: 1.4em; }
   .overlay .who b { font-size: 1.15rem; }
 
   .stage {
     perspective: 1400px;
-    height: min(62vh, 150vw, 600px);
+    height: min(56vh, 140vw, 600px);
+    height: min(56dvh, 140vw, 600px);
+    flex: 0 0 auto;
     aspect-ratio: 3 / 4;
     max-width: 92vw;
   }
@@ -236,14 +245,15 @@
   .half .act .atxt .nm.p2 { color: #178a80; }
   .half .act .dir { font-size: .85rem; padding: 4px 12px; border-radius: 999px; background: rgba(42,32,72,.08); }
 
-  .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; min-height: 52px; }
-  .actions .btn { min-width: 110px; }
+  .actions { display: flex; gap: 8px; flex-wrap: nowrap; justify-content: center; min-height: 50px; width: min(100%, 460px); flex: 0 0 auto; }
+  .actions .btn { flex: 1 1 0; min-width: 0; padding: 13px 6px; font-size: 1rem; white-space: nowrap; }
+  .actions .btn.pass { flex-grow: 1.3; }
   .hint { color: var(--muted); font-size: .9rem; text-align: center; }
 
   /* ---------- Toast ---------- */
   .toast {
-    position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); z-index: 30;
-    transform: translate(-50%, 20px); opacity: 0;
+    position: fixed; left: 50%; top: calc(max(12px, env(safe-area-inset-top)) + 58px); z-index: 30;
+    transform: translate(-50%, -20px); opacity: 0;
     background: var(--ink); color: var(--face-ink); font-weight: 700;
     padding: 12px 20px; border-radius: 999px; box-shadow: 0 8px 30px rgba(0,0,0,.4);
     transition: all .3s; pointer-events: none; text-align: center; max-width: 90vw;
@@ -368,6 +378,7 @@
       </div>
     </div>
   </div>
+  <div class="hint" id="hint"></div>
   <div class="actions" id="actions"></div>
 </div>
 
@@ -382,7 +393,7 @@
         Cards are shuffled within each round, and the next round unlocks when the current one is finished.</li>
       <li>The card flips and splits into two halves, each with a short clue. <b>A</b> is always the gentler pick, <b>B</b> the bolder one.</li>
       <li>Choose one clue — it flips to reveal the activity. “You” means the player who picked the card.</li>
-      <li><b>Pass</b> — each player has a set number of passes (chosen at the start). Passing lets you pick a new card right away. Out of passes? You do the activity.</li>
+      <li><b>Pass</b> — each player has a set number of passes (chosen at the start). Tap <b>Pass</b> as soon as the card flips, or after you've revealed the activity, and you pick a new card right away. Out of passes? You do the activity. Tap a player's name to see how many passes they have left.</li>
       <li><b>Stop</b> — either player can say “stop” at any time. The activity ends and the next player takes their turn.</li>
       <li>The game ends when every card has been played. No points, no winner.</li>
     </ol>
@@ -574,7 +585,7 @@
     for (var p = 0; p < 2; p++) {
       var chip = $("chip" + p), pl = S.players[p];
       chip.querySelector(".name").textContent = pl.name;
-      var dots = "";
+      var dots = '<span class="plabel">Pass</span>';
       for (var i = 0; i < S.maxPasses; i++) dots += '<span class="dot' + (i < pl.passes ? "" : " spent") + '"></span>';
       chip.querySelector(".passes").innerHTML = dots;
       chip.querySelector(".passes").title = pl.passes + " passes left";
@@ -618,7 +629,7 @@
   }
 
   /* ---------- card overlay ---------- */
-  var busy = false;
+  var busy = false, gen = 0;   // gen invalidates animation timers from a closed card
 
   function fillText(el, text, meIdx) {
     el.textContent = "";
@@ -636,8 +647,11 @@
     });
   }
 
+  function hideToast() { clearTimeout(toastTimer); $("toast").classList.remove("show"); }
+
   function openCard(i) {
     if (busy) return;
+    hideToast();
     busy = true;
     S.active = { card: i, choice: null };
     persist();
@@ -667,7 +681,9 @@
       fillText(h.querySelector(".act .atxt"), opt.text, me);
     });
     $("actions").innerHTML = "";
+    $("hint").textContent = "";
     $("overlay").classList.remove("hidden");
+    var g = ++gen;
 
     // restart pop animation
     flipper.style.animation = "none"; void flipper.offsetWidth; flipper.style.animation = "";
@@ -679,11 +695,12 @@
       return;
     }
     setTimeout(function () {
+      if (g !== gen) return;
       flipper.classList.add("flipped");
       title.classList.remove("hidden-soft");
       setTimeout(function () {
-        setActions([{ hint: "Choose one clue to reveal the activity" }]);
-        busy = false;
+        if (g !== gen) return;
+        showTurnButtons();
       }, 650);
     }, resume ? 150 : 550);
   }
@@ -702,24 +719,26 @@
     var halves = document.querySelectorAll(".half");
     halves.forEach(function (h, j) { if (j !== k) h.classList.add("gone"); });
     var chosen = halves[k];
-    setTimeout(function () { chosen.classList.add("open"); }, instant ? 0 : 250);
-    setTimeout(showTurnButtons, instant ? 0 : 800);
+    var g = gen;
+    setTimeout(function () { if (g === gen) chosen.classList.add("open"); }, instant ? 0 : 250);
+    setTimeout(function () { if (g === gen) showTurnButtons(); }, instant ? 0 : 800);
   }
 
+  // Stop and Pass are available as soon as the card is flipped; Done once an activity is revealed
   function showTurnButtons() {
-    var p = S.players[S.turn];
-    setActions([
-      { label: "✓ Done", cls: "done", fn: endTurn.bind(null, "done") },
-      { label: "✋ Stop", cls: "stop", fn: endTurn.bind(null, "stop") },
-      { label: p.passes > 0 ? "↻ Pass (" + p.passes + " left)" : "No passes left", cls: "pass", fn: usePass, disabled: p.passes <= 0 }
-    ]);
+    var p = S.players[S.turn], chosen = S.active && S.active.choice !== null;
+    $("hint").textContent = chosen ? "" : "Choose one clue to reveal the activity";
+    var list = [];
+    if (chosen) list.push({ label: "✓ Done", cls: "done", fn: function () { endTurn("done"); } });
+    list.push({ label: "✋ Stop", cls: "stop", fn: function () { endTurn("stop"); } });
+    list.push({ label: p.passes > 0 ? "↻ Pass (" + p.passes + ")" : "No passes", cls: "pass", fn: usePass, disabled: p.passes <= 0 });
+    setActions(list);
     busy = false;
   }
 
   function setActions(list) {
     var box = $("actions"); box.innerHTML = "";
     list.forEach(function (a) {
-      if (a.hint) { var h = document.createElement("div"); h.className = "hint"; h.textContent = a.hint; box.appendChild(h); return; }
       var btn = document.createElement("button");
       btn.className = "btn " + (a.cls || "");
       btn.textContent = a.label;
@@ -730,7 +749,10 @@
   }
 
   function closeOverlay() {
+    gen++;
     $("overlay").classList.add("hidden");
+    // a card that was flipped is used up, even if no activity was chosen
+    if (S.active) S.cards[S.active.card].used = true;
     S.active = null;
   }
 
@@ -741,7 +763,7 @@
   }
 
   function endTurn(kind) {
-    if (busy) return;
+    if (busy || !S.active) return;
     var before = S.cards[S.active.card].round;
     closeOverlay();
     S.turn = 1 - S.turn;
@@ -751,7 +773,7 @@
   }
 
   function usePass() {
-    if (busy) return;
+    if (busy || !S.active) return;
     var p = S.players[S.turn];
     if (p.passes <= 0) return;
     var before = S.cards[S.active.card].round;
@@ -759,7 +781,7 @@
     closeOverlay();
     persist();
     goBoard();
-    if (remaining() > 0) toast(roundNews(before) + p.name + " passed — pick another card (" + p.passes + " pass" + (p.passes === 1 ? "" : "es") + " left)");
+    if (remaining() > 0) toast(roundNews(before) + p.name + " passed · " + p.passes + " left. Pick again!");
   }
 
   function finish() {
@@ -828,6 +850,12 @@
   });
   $("resumeBtn").addEventListener("click", resume);
   $("menuBtn").addEventListener("click", function () { openDialog("menu"); });
+  [0, 1].forEach(function (i) {
+    $("chip" + i).addEventListener("click", function () {
+      var pl = S.players[i];
+      toast(pl.name + " has " + pl.passes + " pass" + (pl.passes === 1 ? "" : "es") + " left. Open a card, then tap Pass to pick another.");
+    });
+  });
   $("restartBtn").addEventListener("click", function () {
     closeDialog($("menu"));
     ask("Restart with a freshly shuffled deck?", function () {

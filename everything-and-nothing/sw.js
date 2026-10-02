@@ -1,6 +1,6 @@
 // Caches the game so it keeps working with no internet connection
 // once it has been opened (or added to the home screen) from a web server.
-var CACHE = "everything-and-nothing-v2";
+var CACHE = "everything-and-nothing-v3";
 var FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", function (e) {
