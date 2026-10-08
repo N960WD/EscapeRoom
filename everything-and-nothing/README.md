@@ -3,14 +3,14 @@
 A two-player, pass-and-play card game for adult couples (18+). It runs entirely offline in any modern browser on a phone, tablet or laptop. There are no points and no winner.
 
 ## How to play
-1. Before the first card, agree on your limits and a stop word. At setup, choose how many passes each player gets (1–3).
-2. Players take turns tapping any numbered card. Each number can be played only once.
-3. Each player has their own set list of cards, which is never shuffled. Whichever number a player taps, the next card on their list comes up, so the activities build in the planned order. Each player has 10 cards (20 in total).
-4. The card shows its title for 5 seconds so it can be read aloud, then flips and splits into two half-cards, each with a 2–4 word clue. **A** is always the gentler pick and **B** the bolder one.
-5. The player picks one clue, and it flips to reveal the activity. "You" is the player who picked the card; the other player's name is filled in automatically.
-6. Either player can call stop out loud at any time. Tap **Done** to end the activity and move to the next player.
-7. **Pass** skips that card, and the same player picks again to get the next card on their list. If a player's list runs out, the other player keeps going until their list is done. With no passes left, the player does the activity (or someone calls stop).
-8. The game ends when every card on both lists has been played.
+1. Take turns tapping any numbered card. Each number can only be played once.
+2. The card first shows its title for 5 seconds so you can read it aloud. Then it flips and splits into two halves, each with a short clue. **A** is always the gentler pick, **B** the bolder one.
+3. Choose one clue — it flips to reveal the activity. "You" means the player who picked the card.
+4. **Pass** — each player has a set number of passes (chosen at the start). Tap **Pass** as soon as the card flips, or after you've revealed the activity. If you choose to pass, the other player goes next. Tap a player's name to see how many passes they have left.
+5. **Stop** — either player can say "stop" out loud at any time and the game ends (☰ → **End Game** in the app).
+6. The game ends when every card has been played. No points, no winner. Just fun.
+
+Behind the scenes, each player has their own fixed list of cards: whichever number they tap, the next card on their list comes up. If one player's list runs out first, the other player takes the remaining turns.
 
 **Supply list:** scarf or soft tie, blindfold, ice, a drink, massage oil, lube, towels, and a playlist.
 

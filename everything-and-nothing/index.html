@@ -329,7 +329,7 @@
     <div class="field"><label for="passCount">PASSES EACH</label>
       <select id="passCount"><option value="1">1 pass</option><option value="2">2 passes</option><option value="3" selected>3 passes</option></select>
     </div>
-    <p class="note">Before the first card: agree on your limits and a stop word. Either player can call stop out loud at any time.</p>
+    <p class="note">Either player can say “stop” out loud at any time and the game ends.</p>
     <button class="btn" type="submit">Start Game</button>
     <div class="row">
       <button class="btn ghost" type="button" data-open="rules">How to Play</button>
@@ -393,14 +393,12 @@
   <div class="panel">
     <h2>How to Play</h2>
     <ol>
-      <li>Before the first card, agree on your limits and a stop word.</li>
       <li>Take turns tapping any numbered card. Each number can only be played once.</li>
-      <li>Each player has their own set list of 10 cards. Whichever number you tap, the next card on your list comes up, in the planned order.</li>
       <li>The card first shows its title for 5 seconds so you can read it aloud. Then it flips and splits into two halves, each with a short clue. <b>A</b> is always the gentler pick, <b>B</b> the bolder one.</li>
       <li>Choose one clue — it flips to reveal the activity. “You” means the player who picked the card.</li>
-      <li><b>Pass</b> — each player has a set number of passes (chosen at the start). Tap <b>Pass</b> as soon as the card flips, or after you've revealed the activity. That card is skipped, and you pick again to get the next card on your list. Out of passes? You do the activity. Tap a player's name to see how many passes they have left.</li>
-      <li><b>Stop</b> — either player can say “stop” out loud at any time. Tap <b>Done</b> to move on to the next player.</li>
-      <li>The game ends when every card has been played. No points, no winner.</li>
+      <li><b>Pass</b> — each player has a set number of passes (chosen at the start). Tap <b>Pass</b> as soon as the card flips, or after you've revealed the activity. If you choose to pass, the other player goes next. Tap a player's name to see how many passes they have left.</li>
+      <li><b>Stop</b> — either player can say “stop” out loud at any time and the game ends.</li>
+      <li>The game ends when every card has been played. No points, no winner. Just fun.</li>
     </ol>
     <p><b>Supply list:</b> scarf or soft tie, blindfold, ice, a drink, massage oil, lube, towels, and a playlist.</p>
     <p class="muted">Works fully offline. Your game is saved on this device automatically.</p>
@@ -415,6 +413,7 @@
       <button class="btn" data-close>Back to Game</button>
       <button class="btn ghost" data-open="rules">How to Play</button>
       <button class="btn ghost" id="restartBtn">Restart (same players)</button>
+      <button class="btn ghost" id="endGameBtn">End Game</button>
       <button class="btn ghost" id="newPlayersBtn">New Players</button>
       <button class="btn ghost" data-open="editor">Edit Cards</button>
     </div>
@@ -782,18 +781,17 @@
     if (p.passes <= 0) return;
     p.passes--;
     closeOverlay();
-    nextTurn(true);
+    nextTurn(false);
     persist();
     goBoard();
-    if (remaining() > 0) toast(S.turn === prev ? p.name + " passed · " + p.passes + " left. Pick again!"
-                                               : p.name + " passed and has no cards left. " + S.players[S.turn].name + "'s turn");
+    if (remaining() > 0) toast(p.name + " passed · " + p.passes + " left. " + turnNote(prev) + S.players[S.turn].name + "'s turn");
   }
 
-  function finish() {
+  function finish(stopped) {
     drop(LS_STATE);
     show("end");
-    $("endText").textContent = "All " + S.tiles.length + " cards have been played by " + S.players[0].name + " & " + S.players[1].name +
-      ". No points, no winner — just the moments.";
+    $("endText").textContent = (stopped ? "Game over. " : "All " + S.tiles.length + " cards have been played. ") +
+      "No points, no winner. Just fun.";
   }
 
   /* ---------- editor ---------- */
@@ -864,6 +862,10 @@
     ask("Restart from the first card?", function () {
       newGame([S.players[0].name, S.players[1].name], S.maxPasses); goBoard(); toast(S.players[0].name + " goes first!");
     });
+  });
+  $("endGameBtn").addEventListener("click", function () {
+    closeDialog($("menu"));
+    ask("End the game now?", function () { finish(true); });
   });
   $("newPlayersBtn").addEventListener("click", function () {
     closeDialog($("menu"));
