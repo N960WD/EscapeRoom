@@ -194,8 +194,12 @@
     color: var(--gold); font-family: Georgia, serif;
     box-shadow: 0 20px 60px rgba(0,0,0,.5);
   }
-  .face.front .big { font-size: min(22vh, 34vw, 180px); font-weight: 700; line-height: 1; }
-  .face.front .sub { letter-spacing: .3em; font-size: .8rem; color: var(--muted); margin-top: 10px; font-family: system-ui, sans-serif; }
+  .face.front { padding: 24px 22px; gap: 18px; text-align: center; }
+  .face.front .fnum { letter-spacing: .3em; font-size: .85rem; color: var(--muted); font-family: system-ui, sans-serif; }
+  .face.front .ftitle { font-size: clamp(1.9rem, 6.5vh, 3rem); font-weight: 700; line-height: 1.15; color: var(--gold); }
+  .face.front .timer { width: 60%; height: 4px; border-radius: 4px; background: rgba(245,200,107,.2); overflow: hidden; }
+  .face.front .timer span { display: block; height: 100%; width: 0; background: var(--gold); }
+  .face.front .timer span.run { width: 100%; transition: width var(--read-ms, 5000ms) linear; }
   .face.back {
     transform: rotateY(180deg);
     display: flex; flex-direction: column; gap: 10px;
@@ -325,7 +329,7 @@
     <div class="field"><label for="passCount">PASSES EACH</label>
       <select id="passCount"><option value="1">1 pass</option><option value="2">2 passes</option><option value="3" selected>3 passes</option></select>
     </div>
-    <p class="note">Before the first card: agree on your limits and a stop word. Either player can tap <b>Stop</b> at any time.</p>
+    <p class="note">Before the first card: agree on your limits and a stop word. Either player can call stop out loud at any time.</p>
     <button class="btn" type="submit">Start Game</button>
     <div class="row">
       <button class="btn ghost" type="button" data-open="rules">How to Play</button>
@@ -363,7 +367,7 @@
   <div class="card-title hidden-soft" id="cardTitle"></div>
   <div class="stage">
     <div class="flipper" id="flipper">
-      <div class="face front"><div class="big" id="bigNum"></div><div class="sub" id="frontSub">CARD</div></div>
+      <div class="face front"><div class="fnum">CARD <span id="bigNum"></span></div><div class="ftitle" id="frontTitle"></div><div class="timer"><span id="readBar"></span></div></div>
       <div class="face back">
         <div class="half a" data-i="0">
           <div class="inner">
@@ -392,10 +396,10 @@
       <li>Before the first card, agree on your limits and a stop word.</li>
       <li>Take turns tapping any numbered card. Each number can only be played once.</li>
       <li>Each player has their own set list of 10 cards. Whichever number you tap, the next card on your list comes up, in the planned order.</li>
-      <li>The card flips and splits into two halves, each with a short clue. <b>A</b> is always the gentler pick, <b>B</b> the bolder one.</li>
+      <li>The card first shows its title for 5 seconds so you can read it aloud. Then it flips and splits into two halves, each with a short clue. <b>A</b> is always the gentler pick, <b>B</b> the bolder one.</li>
       <li>Choose one clue — it flips to reveal the activity. “You” means the player who picked the card.</li>
       <li><b>Pass</b> — each player has a set number of passes (chosen at the start). Tap <b>Pass</b> as soon as the card flips, or after you've revealed the activity. That card is skipped, and you pick again to get the next card on your list. Out of passes? You do the activity. Tap a player's name to see how many passes they have left.</li>
-      <li><b>Stop</b> — either player can say “stop” at any time. The activity ends and the next player takes their turn.</li>
+      <li><b>Stop</b> — either player can say “stop” out loud at any time. Tap <b>Done</b> to move on to the next player.</li>
       <li>The game ends when every card has been played. No points, no winner.</li>
     </ol>
     <p><b>Supply list:</b> scarf or soft tie, blindfold, ice, a drink, massage oil, lube, towels, and a playlist.</p>
@@ -618,6 +622,7 @@
   }
 
   /* ---------- card overlay ---------- */
+  var READ_MS = 5000;           // how long the title shows before the card flips
   var busy = false, gen = 0;   // gen invalidates animation timers from a closed card
 
   function fillText(el, text, meIdx) {
@@ -651,7 +656,10 @@
   function buildOverlay(resume) {
     var a = S.active, card = S.lists[a.player][a.idx], me = a.player;
     $("bigNum").textContent = a.tile + 1;
-    $("frontSub").textContent = (card.round || "card").toUpperCase();
+    $("frontTitle").textContent = card.title;
+    var bar = $("readBar");
+    bar.style.setProperty("--read-ms", READ_MS + "ms");
+    bar.classList.remove("run");
     var who = $("who"); who.textContent = "";
     var b = document.createElement("b"); b.textContent = S.players[me].name;
     b.style.color = me === 0 ? "var(--p1)" : "var(--p2)";
@@ -684,6 +692,8 @@
       revealChoice(a.choice, true);
       return;
     }
+    // show the title first so it can be read aloud, then flip to the choices
+    requestAnimationFrame(function () { requestAnimationFrame(function () { bar.classList.add("run"); }); });
     setTimeout(function () {
       if (g !== gen) return;
       flipper.classList.add("flipped");
@@ -692,7 +702,7 @@
         if (g !== gen) return;
         showTurnButtons();
       }, 650);
-    }, resume ? 150 : 550);
+    }, READ_MS);
   }
 
   function chooseHalf(k) {
@@ -712,13 +722,12 @@
     setTimeout(function () { if (g === gen) showTurnButtons(); }, instant ? 0 : 800);
   }
 
-  // Stop and Pass are available as soon as the card is flipped; Done once an activity is revealed
+  // Pass is available as soon as the card flips; Done once an activity is revealed
   function showTurnButtons() {
     var p = S.players[S.turn], chosen = S.active && S.active.choice !== null;
     $("hint").textContent = chosen ? "" : "Choose one clue to reveal the activity";
     var list = [];
-    if (chosen) list.push({ label: "✓ Done", cls: "done", fn: function () { endTurn("done"); } });
-    list.push({ label: "✋ Stop", cls: "stop", fn: function () { endTurn("stop"); } });
+    if (chosen) list.push({ label: "✓ Done", cls: "done", fn: endTurn });
     list.push({ label: p.passes > 0 ? "↻ Pass (" + p.passes + ")" : "No passes", cls: "pass", fn: usePass, disabled: p.passes <= 0 });
     setActions(list);
     busy = false;
@@ -757,14 +766,14 @@
     return "";
   }
 
-  function endTurn(kind) {
+  function endTurn() {
     if (busy || !S.active) return;
     var prev = S.turn;
     closeOverlay();
     nextTurn(false);
     persist();
     goBoard();
-    if (remaining() > 0) toast((kind === "stop" ? "Stopped. " : "") + turnNote(prev) + S.players[S.turn].name + "'s turn");
+    if (remaining() > 0) toast(turnNote(prev) + S.players[S.turn].name + "'s turn");
   }
 
   function usePass() {
